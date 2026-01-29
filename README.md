@@ -52,7 +52,7 @@ flowchart LR
   V -->|OCR pièces| TX[Amazon Textract]
   V --> DDB[(DynamoDB: demandes/statuts)]
   V --> S3DOC[(S3: pièces/contrats)]
-  V -->|Si anomalie| SNS[SNS: Back‑Office (HITL)]
+  V -->|Si anomalie| SNS[SNS: Back‑Office ]
   V -->|Réponse| APIGW
 
   U -->|UI consentement| CF
@@ -68,5 +68,5 @@ flowchart LR
   WH --> S3DOC
 
   %% option paiement
-  WH --> PAY[Lambda: ProcessPayment (option)]
+  WH --> PAY[Lambda: ProcessPayment]
   PAY --> DDB

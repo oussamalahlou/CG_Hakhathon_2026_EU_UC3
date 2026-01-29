@@ -70,3 +70,10 @@ flowchart LR
   %% option paiement
   WH --> PAY[Lambda: ProcessPayment]
   PAY --> DDB
+
+🔍 Description des scripts Python 
+Classify : appelle Amazon Bedrock pour classifier l’intention de la demande (JSON strict : intent, confidence, rationale) puis renvoie le résultat à Step Functions.
+Verify : valide les champs (formats/cohérence), lance Textract pour extraire les infos des PJ et compare avec la saisie ; renvoie VERIFIED/NEEDS_FIXES et publie sur SNS si HITL requis.
+ValidateConsent : contrôle consent.accepted, calcule une preuve hash (SHA‑256), enregistre l’horodatage/version/IP/userAgent dans DynamoDB, puis autorise la suite du workflow.
+GenerateContract : construit le contrat (PDF via template), l’upload dans S3 (contracts/<id>.pdf) et retourne contractId + s3Uri/s3Key pour l’étape suivante.
+Payment : déclenche le paiement après signature (mode MOCK ou intégration Stripe), enregistre l’état PENDING/PAID/FAILED dans DynamoDB et (si Stripe) traite aussi le webhook pour finaliser le statut.

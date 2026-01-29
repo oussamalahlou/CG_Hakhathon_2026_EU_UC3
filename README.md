@@ -48,7 +48,7 @@ flowchart LR
   C -->|LLM| BR[Amazon Bedrock]
   C --> V[Lambda: Verify]
 
-  V -->|LLM (option)| BR
+  V -->|LLM| BR
   V -->|OCR pièces| TX[Amazon Textract]
   V --> DDB[(DynamoDB: demandes/statuts)]
   V --> S3DOC[(S3: pièces/contrats)]

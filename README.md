@@ -71,12 +71,4 @@ flowchart LR
   WH --> PAY[Lambda: ProcessPayment]
   PAY --> DDB
 
-- **Classify** : utilise **Amazon Bedrock** pour analyser le texte libre et déterminer l’intention de la demande (`intent`, `confidence`, `rationale`), puis renvoie un résultat structuré à Step Functions.
-
-- **Verify** : contrôle la validité et la cohérence des données saisies, exécute **Amazon Textract** pour extraire les informations des pièces jointes, compare les valeurs OCR avec la saisie, renvoie `VERIFIED` ou `NEEDS_FIXES`, et publie un message **SNS** en cas de besoin d’intervention humaine (HITL).
-
-- **ValidateConsent** : vérifie `consent.accepted`, génère une **preuve hash (SHA‑256)**, stocke horodatage, version du texte, IP et user-agent dans **DynamoDB**, puis confirme la poursuite du workflow.
-
-- **GenerateContract** : génère le contrat client au format **PDF** à partir d’un template, l’enregistre dans **Amazon S3** (`contracts/<id>.pdf`) et renvoie `contractId`, `s3Uri` et `s3Key` pour l’étape suivante.
-
 - **Payment** : déclenche le **paiement après la signature** du contrat (mode **MOCK** ou **Stripe**), crée et met à jour un enregistrement dans **DynamoDB** (`PENDING`, `PAID`, `FAILED`) et, en mode Stripe, gère également le **webhook** pour finaliser le statut du paiement.

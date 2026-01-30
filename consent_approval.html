@@ -63,11 +63,17 @@
         });
         const json = await resp.json();
         if(resp.ok){
-          el('resultMsg').textContent = json.message || 'Réponse enregistrée.';
-          // clear session and show a simple follow-up
+          // Wait 2 seconds before showing the final message
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          el('resultMsg').textContent = 'Votre demande sera traitée et votre contrat sera envoyé par email pour la signature.';
+          el('resultMsg').style.color = '#059669';
+          el('resultMsg').style.fontWeight = '500';
+          // clear session and disable buttons
           sessionStorage.removeItem('serverResponse');
           el('approveBtn').disabled = true;
           el('declineBtn').disabled = true;
+          // Hide buttons
+          document.querySelector('.btns').style.display = 'none';
         } else {
           el('resultMsg').textContent = 'Erreur: ' + (json && json.message ? json.message : resp.status);
         }

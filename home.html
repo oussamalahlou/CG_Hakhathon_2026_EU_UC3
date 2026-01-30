@@ -1,0 +1,248 @@
+
+<form class="card" id="energyRequestForm">
+<h2>Demande Énergie</h2>
+ 
+  <!-- Type de demande -->
+<label for="requestType">Type de demande</label>
+<select id="requestType" name="requestType" required>
+<option value="" selected disabled>-- Sélectionner --</option>
+<option value="subscription">Souscription (ouverture / nouveau branchement)</option>
+<option value="change_holder">Changement de titulaire</option>
+<option value="transfer">Changement d’adresse / Transfert</option>
+<option value="power_change">Changement de puissance</option>
+<option value="complaint">Réclamation</option>
+<option value="attestation">Attestation / Duplicata de facture</option>
+<option value="termination">Résiliation</option>
+<option value="info">Demande d’information</option>
+</select>
+ 
+  <!-- Champ texte -->
+<label for="message">Votre demande</label>
+<textarea id="message" name="message" rows="5" placeholder="Décrivez votre demande..." required></textarea>
+ 
+  <!-- Note dynamique -->
+<div class="note" id="docsNote" aria-live="polite">
+
+    Sélectionnez un type de demande pour voir les documents à joindre.
+</div>
+
+  <!-- Spinner + elapsed time (hidden until sending) -->
+  <div id="spinnerArea" style="display:none;align-items:center;gap:10px;margin-top:10px;" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <div id="spinnerText" class="muted small">Attente: 0s</div>
+  </div>
+ 
+  <!-- Une seule pièce jointe -->
+<label for="attachments">
+
+    Pièce jointe (un seul fichier)
+<span class="muted">— merci de regrouper vos documents en 1 PDF si possible</span>
+</label>
+ 
+  <input
+
+    type="file"
+
+    id="attachments"
+
+    name="attachments"
+
+    accept=".pdf,.jpg,.jpeg,.png"
+
+  />
+ 
+  <p class="muted small">
+
+    Si vous avez plusieurs documents (CIN + logement + facture…), merci de les fusionner en un seul PDF.
+</p>
+ 
+  <button type="submit">Envoyer</button>
+</form>
+ 
+<style>
+
+  .card{
+
+    border:1px solid #e5e7eb;border-radius:14px;padding:18px;max-width:860px;background:#fff;
+
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+  }
+
+  label{display:block;font-weight:600;margin:12px 0 6px}
+
+  select, textarea, input[type=file]{
+
+    width:100%;padding:10px;border:1px solid #d1d5db;border-radius:12px;
+
+    outline:none;
+
+  }
+
+  textarea{resize:vertical}
+
+  .note{
+
+    margin-top:10px;padding:12px;border-radius:12px;
+
+    background:#f8fafc;border:1px dashed #cbd5e1;color:#334155;
+
+    line-height:1.35;
+
+  }
+
+  .muted{color:#64748b;font-weight:500}
+
+  .small{font-size:.92rem}
+
+  button{
+
+    margin-top:16px;padding:10px 14px;border:0;border-radius:12px;
+
+    background:#2563eb;color:#fff;font-weight:700;cursor:pointer;
+
+  }
+
+  button:hover{filter:brightness(.95)}
+  /* Spinner */
+  .spinner{width:18px;height:18px;border:3px solid #e6eefc;border-top-color:#2563eb;border-radius:50%;display:inline-block;vertical-align:middle;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+ 
+<script>
+
+  const requestType = document.getElementById("requestType");
+
+  const docsNote = document.getElementById("docsNote");
+ 
+  const notes = {
+
+    subscription:
+
+      "📎 <strong>Souscription</strong> : merci de joindre <strong>la CIN</strong> + <strong>les documents du logement</strong> (acte de propriété / contrat de location / attestation équivalente).",
+
+    change_holder:
+
+      "📎 <strong>Changement de titulaire</strong> : merci de joindre <strong>la CIN du nouveau titulaire</strong> + <strong>les documents du logement</strong>. (Optionnel : relevé/photo du compteur).",
+
+    transfer:
+
+      "📎 <strong>Changement d’adresse / Transfert</strong> : merci de joindre <strong>la CIN</strong> + <strong>les documents du nouveau logement</strong>.",
+
+    power_change:
+
+      "📎 <strong>Changement de puissance</strong> : merci de joindre <strong>la CIN</strong> + <strong>la dernière facture</strong>.",
+
+    complaint:
+
+      "📎 <strong>Réclamation</strong> : merci de joindre <strong>la CIN</strong> + <strong>la facture concernée</strong>. (Si possible : photo du compteur / preuve de paiement).",
+
+    attestation:
+
+      "📎 <strong>Attestation / Duplicata</strong> : merci de joindre <strong>la CIN</strong> et préciser dans le message <strong>la période</strong> ou <strong>le numéro de contrat</strong>.",
+
+    termination:
+
+      "📎 <strong>Résiliation</strong> : merci de joindre <strong>la CIN</strong> + <strong>une demande écrite signée</strong> + <strong>le relevé/photo du compteur</strong>.",
+
+    info:
+
+      "✅ <strong>Demande d’information</strong> : <strong>aucun document</strong> n’est requis."
+
+  };
+ 
+  requestType.addEventListener("change", (e) => {
+
+    const value = e.target.value;
+
+    docsNote.innerHTML = notes[value] || "Sélectionnez un type de demande pour voir les documents à joindre.";
+
+  });
+</script>
+
+<script>
+  // Submit handler: send description to mock lambda proxy
+  (function(){
+    const form = document.getElementById('energyRequestForm');
+    const textarea = document.getElementById('message');
+    const docsNote = document.getElementById('docsNote');
+    const spinnerArea = document.getElementById('spinnerArea');
+    const spinnerText = document.getElementById('spinnerText');
+
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      const text = (textarea.value || '').trim();
+      if(!text){
+        docsNote.textContent = 'Veuillez saisir votre demande avant d\'envoyer.';
+        docsNote.classList.add('note');
+        return;
+      }
+
+      // show sending state
+      const prev = docsNote.innerHTML;
+      docsNote.textContent = 'Traitement de votre demande en cours...';
+
+      // show spinner + elapsed time
+      let seconds = 0;
+      let timerId = null;
+      if(spinnerArea){
+        spinnerArea.style.display = 'flex';
+        if(spinnerText) spinnerText.textContent = 'Attente: 0s';
+        timerId = setInterval(()=>{
+          seconds += 1;
+          if(spinnerText) spinnerText.textContent = 'Attente: ' + seconds + 's';
+        }, 1000);
+      }
+
+      try{
+        const payload = { description: text };
+        const resp = await fetch('/api/lambda', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: JSON.stringify(payload) })
+        });
+
+        const data = await resp.json();
+        console.log('Lambda response:', data);
+
+        // If automation grade is AUTO, redirect to approval page
+        // Prefer the new path `lambdaB_response.response.automation_grade`, fall back to older `response` path
+        const grade = (data && data.lambdaB_response && data.lambdaB_response.response && data.lambdaB_response.response.automation_grade)
+          || (data && data.response && data.response.automation_grade);
+        console.log('Detected automation_grade:', grade);
+        if(String(grade).toUpperCase() === 'AUTO'){
+          try{
+            // Store a compatible object for the approval page which expects `response` and `requestId` fields
+            const stored = Object.assign({}, data);
+            if(data && data.lambdaB_response && data.lambdaB_response.response){
+              stored.response = data.lambdaB_response.response;
+            }
+            if(!stored.requestId) stored.requestId = data.requestId || ('mock-' + Date.now());
+            sessionStorage.setItem('serverResponse', JSON.stringify(stored));
+          }catch(e){ console.warn('Could not store response in sessionStorage', e); }
+          // stop spinner before redirect and navigate to approval page where user can give consent
+          if(timerId) clearInterval(timerId);
+          if(spinnerArea) spinnerArea.style.display = 'none';
+          window.location.assign('approval.html');
+          return;
+        }
+
+        // Success - clear form and hide spinner
+        docsNote.innerHTML = 'Demande envoyée avec succès.';
+        textarea.value = '';
+        // stop spinner
+        if(timerId) clearInterval(timerId);
+        if(spinnerArea) spinnerArea.style.display = 'none';
+      }catch(err){
+        console.error(err);
+        // stop spinner on error
+        if(timerId) clearInterval(timerId);
+        if(spinnerArea) spinnerArea.style.display = 'none';
+        docsNote.textContent = 'Erreur réseau lors de l\'envoi.';
+        docsNote.classList.add('note');
+      }
+    });
+  })();
+</script>
+
+ 
